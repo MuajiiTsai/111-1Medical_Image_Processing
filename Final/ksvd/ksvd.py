@@ -67,14 +67,12 @@ class KSVD(object):
             r=(patch_index//32)*8
             c=(patch_index%32)*8
             patch=img[r:r+8, c:c+8].flatten()
-            print(patch_index, r, c)
-            # print(patch.shape)
             normalize=np.linalg.norm(patch)
             mean=np.sum(patch)/64
             # print (mean)
             img_reshape[:, patch_index]=patch
             #y[:, patch_index]=(patch/mean)
-            y[:, patch_index]=(patch-mean*np.ones(64))/normalize
+            y[:, patch_index]=(patch-mean*np.ones(64))/normalize if normalize != 0 else 0
 
         #字典初始化
         self._initialize(y)
@@ -148,11 +146,11 @@ def psnr(A, B):
 #将8*8块为列向量的矩阵还原为原矩阵
 def patch_to_img(patchs):
     patch_num=patchs.shape[1]
-    size=np.sqrt(patch_num).astype(np.int)
-    patch_size=np.sqrt(patchs.shape[0]).astype(np.int)
+    size=np.sqrt(patch_num).astype(np.int32)
+    patch_size=np.sqrt(patchs.shape[0]).astype(np.int32)
     img=np.zeros((patch_size*size, patch_size*size))
     for i in range(patch_num):
-        r=(i/size)*8
+        r=(i//size)*8
         c=(i%size)*8
         img[r:r+8, c:c+8]=patchs[:, i].reshape((8, 8))
     return img
@@ -160,12 +158,12 @@ def patch_to_img(patchs):
 #将图像分割为8*8块作为列向量
 def img_to_patch(img):
     patchs=np.zeros((8*8, 32*32))
-    blocks_r=img.shape[0]/8
-    blocks_c=img.shape[1]/8
+    blocks_r=img.shape[0]//8
+    blocks_c=img.shape[1]//8
     patch_num=blocks_r*blocks_c
     for i in range(patchs.shape[1]):
         #按先行后列，将图片分解成32*32个8*8的小块并装换为列向量
-        r=(i/blocks_r)*8
+        r=(i//blocks_r)*8
         c=(i%blocks_c)*8
         patch=img[r:r+8, c:c+8].flat
         patchs[:, i]=patch
@@ -185,12 +183,12 @@ if __name__ == '__main__':
     # cv2.namedWindow("Original")
     # cv2.imshow("Original",ori.astype(np.uint8))
 
-    cv2.namedWindow("Destory")
-    cv2.imshow("Destory",img.astype(np.uint8))
+    # cv2.namedWindow("Destory")
+    # cv2.imshow("Destory",img.astype(np.uint8))
     # print ('破坏像素点后图像PSNR值：', psnr(ori, img))
 
-    cv2.namedWindow("Train")
-    cv2.imshow("Train", train.astype(np.uint8))
+    # cv2.namedWindow("Train")
+    # cv2.imshow("Train", train.astype(np.uint8))
 
     #最大迭代次数设为80
     ksvd = KSVD(max_iter=80)
