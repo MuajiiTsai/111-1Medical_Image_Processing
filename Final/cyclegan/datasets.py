@@ -22,18 +22,18 @@ class ImageDataset(Dataset):
         self.files_B = sorted(glob.glob(os.path.join(root, "%s/RUS" % mode) + "/*.*"))
 
     def __getitem__(self, index):
-        image_A = Image.open(self.files_A[index % len(self.files_A)]).convert('L')
+        image_A = Image.open(self.files_A[index % len(self.files_A)])
 
         if self.unaligned:
-            image_B = Image.open(self.files_B[random.randint(0, len(self.files_B) - 1)]).convert('L')
+            image_B = Image.open(self.files_B[random.randint(0, len(self.files_B) - 1)])
         else:
-            image_B = Image.open(self.files_B[index % len(self.files_B)]).convert('L')
+            image_B = Image.open(self.files_B[index % len(self.files_B)])
 
         # Convert grayscale images to rgb
-        # if image_A.mode != "RGB":
-        #     image_A = to_rgb(image_A)
-        # if image_B.mode != "RGB":
-        #     image_B = to_rgb(image_B)
+        if image_A.mode != "RGB":
+            image_A = to_rgb(image_A)
+        if image_B.mode != "RGB":
+            image_B = to_rgb(image_B)
 
         item_A = self.transform(image_A)
         item_B = self.transform(image_B)

@@ -79,7 +79,7 @@ class GeneratorResNet(nn.Module):
             in_features = out_features
 
         # Output layer
-        model += [nn.ReflectionPad2d(channels), nn.Conv2d(out_features, channels, 7, padding=4), nn.Tanh()] #####
+        model += [nn.ReflectionPad2d(channels), nn.Conv2d(out_features, channels, 7), nn.Tanh()] #####
 
         self.model = nn.Sequential(*model)
 
