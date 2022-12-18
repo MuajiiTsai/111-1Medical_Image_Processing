@@ -67,20 +67,21 @@ class KSVD(object):
             r=(patch_index//32)*8
             c=(patch_index%32)*8
             patch=img[r:r+8, c:c+8].flatten()
+            # print(patch_index, r, c)
+            # print(patch.shape)
             normalize=np.linalg.norm(patch)
             mean=np.sum(patch)/64
             # print (mean)
             img_reshape[:, patch_index]=patch
             #y[:, patch_index]=(patch/mean)
             y[:, patch_index]=(patch-mean*np.ones(64))/normalize if normalize != 0 else 0
-
         #字典初始化
         self._initialize(y)
 
         for i in range(self.max_iter):
             #linear_model.orthogonal_mp 用法详见：
             #http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.orthogonal_mp.html
-            x = linear_model.orthogonal_mp(self.dictionary, y, n_nonzero_coefs=self.n_nonzero_coefs)#OMP
+            x = linear_model.orthogonal_mp(self.dictionary, y, n_nonzero_coefs=self.n_nonzero_coefs)    #OMP
             e = np.linalg.norm(y- np.dot(self.dictionary, x))
             print ('第%s次迭代，误差为：%s' %(i, e))
             if e < self.tol:
@@ -173,11 +174,11 @@ def img_to_patch(img):
 
 if __name__ == '__main__':
     #读入原图
-    img = cv2.imread("./AUS_ct15_34.png",0).astype(np.float)
+    img = cv2.imread("./AUS_ct15_34.png",0).astype(np.uint8)
     #像素丢失后的图
     # img=pixel_miss(ori)
     #训练字典所用的图
-    train = cv2.imread("./RUS_k42.jpg",0).astype(np.float)
+    train = cv2.imread("./RUS_k42.jpg",0).astype(np.uint8)
 
     #展示原图、破坏图、训练用图
     # cv2.namedWindow("Original")
@@ -185,13 +186,13 @@ if __name__ == '__main__':
 
     # cv2.namedWindow("Destory")
     # cv2.imshow("Destory",img.astype(np.uint8))
-    # print ('破坏像素点后图像PSNR值：', psnr(ori, img))
+    # # print ('破坏像素点后图像PSNR值：', psnr(ori, img))
 
     # cv2.namedWindow("Train")
     # cv2.imshow("Train", train.astype(np.uint8))
 
     #最大迭代次数设为80
-    ksvd = KSVD(max_iter=80)
+    ksvd = KSVD(max_iter=80, n_components=400)
     dictionary, src_rec = ksvd.fit(train)
 
     #按块展示字典
@@ -199,17 +200,20 @@ if __name__ == '__main__':
     dictionary=dictionary-np.amin(dictionary)
     dictionary=dictionary/np.amax(dictionary)
     cv2.imshow("Dictionary", patch_to_img(dictionary))#.astype(np.uint8))
+    cv2.imwrite('./Dictionary.bmp', patch_to_img(dictionary))
 
     #用训练得到的字典还原图像
     cv2.namedWindow("K-SVD_Rec")
     img=ksvd.missing_pixel_reconstruct(img)
     cv2.imshow("K-SVD_Rec", img.astype(np.uint8))
+    cv2.imwrite('./K-SVD_Rec.bmp', img.astype(np.uint8))
     # print('利用训练获得的字典重构图像后PSNR值：', psnr(ori, img))
 
 
     #用训练得到的字典还原训练用图
     cv2.namedWindow("K-SVD")
     cv2.imshow("K-SVD",src_rec.astype(np.uint8))
+    cv2.imwrite('./K-SVD.bmp', src_rec.astype(np.uint8))
     # print('用字典重构训练集合信号PSNR：', psnr(train,src_rec))
 
     cv2.waitKey(0)
